@@ -69,8 +69,8 @@ public class MemberResourceRESTController {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("email", "Email taken"));
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException exception) {
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleGenericException(Exception exception) {
         return ResponseEntity.badRequest().body(Map.of("error", exception.getMessage()));
     }
 }
