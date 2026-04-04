@@ -1,0 +1,61 @@
+package com.iskren.service;
+
+import com.iskren.model.Member;
+import com.iskren.repository.MemberRepository;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.ValidationException;
+import jakarta.validation.Validator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+public class MemberService {
+
+    private final MemberRepository memberRepository;
+    private final Validator validator;
+
+    public MemberService(MemberRepository memberRepository, Validator validator) {
+        this.memberRepository = memberRepository;
+        this.validator = validator;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Member> listAllMembers() {
+        return memberRepository.findAllByOrderByNameAsc();
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Member> lookupMemberById(long id) {
+        return memberRepository.findById(id);
+    }
+
+    @Transactional
+    public void createMember(Member member) {
+        if (member == null) {
+            throw new IllegalArgumentException("Member request body is required");
+        }
+
+        validateMember(member);
+        memberRepository.save(member);
+    }
+
+    private void validateMember(Member member) {
+        Set<ConstraintViolation<Member>> violations = validator.validate(member);
+        if (!violations.isEmpty()) {
+            throw new ConstraintViolationException(new HashSet<>(violations));
+        }
+
+        if (emailAlreadyExists(member.getEmail())) {
+            throw new ValidationException("Unique Email Violation");
+        }
+    }
+
+    private boolean emailAlreadyExists(String email) {
+        return memberRepository.findByEmail(email).isPresent();
+    }
+}
