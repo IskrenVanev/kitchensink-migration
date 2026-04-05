@@ -101,6 +101,8 @@ form {
   margin-top: 14px;
   padding: 16px;
   width: 420px;
+  max-width: 100%;
+  box-sizing: border-box;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: #ffffff;
@@ -122,6 +124,9 @@ label {
 }
 
 input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   padding: 8px 10px;
   border: 1px solid #c4d0db;
   border-radius: 8px;
@@ -175,15 +180,25 @@ span.invalid {
   color: var(--danger);
 }
 
-.simpletablestyle {
+.table-scroll {
+  width: 100%;
+  border-radius: inherit;
+}
+
+.table-shell {
   width: 100%;
   max-width: 560px;
-  border-collapse: collapse;
   border: 1px solid var(--line);
   border-radius: 10px;
-  overflow: hidden;
   background: #ffffff;
   box-shadow: 0 8px 20px rgba(36, 52, 70, 0.08);
+  overflow: hidden;
+}
+
+.simpletablestyle {
+  width: 100%;
+  max-width: none;
+  border-collapse: collapse;
 }
 
 .simpletablestyle td {
@@ -223,6 +238,7 @@ span.invalid {
   }
 
   form,
+  .table-shell,
   .simpletablestyle {
     width: 100%;
     max-width: none;
@@ -231,6 +247,16 @@ span.invalid {
   .actions,
   .messages {
     margin-left: 0;
+  }
+
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 0;
+  }
+
+  .simpletablestyle {
+    min-width: 520px;
   }
 
   .form-row {

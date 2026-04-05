@@ -26,6 +26,16 @@ The migration went through two phases:
    `src/main/resources/static/js/app.js` for Spring Boot to serve. This is the industry-standard
    approach for embedding a React frontend inside a Java web application.
 
+## Final toolchain versions
+
+- `react`: `19.2.4`
+- `react-dom`: `19.2.4`
+- `vite`: `8.0.3`
+- `@vitejs/plugin-react`: `6.0.1`
+
+These versions were validated in this repository by running `npm install` and `npm run build`
+successfully after the upgrades.
+
 ---
 
 ## How the two-folder structure works
@@ -147,6 +157,9 @@ everything — the HTML page, the CSS, images, and the pre-built JavaScript bund
 **Prerequisites:** Java 21, Maven (or use the included `mvnw.cmd` wrapper). Node.js is
 only needed if you want to rebuild the frontend.
 
+For Vite 8, Node.js must satisfy the engine constraint used by the installed package:
+`^20.19.0 || >=22.12.0`.
+
 ```bash
 # From the project root:
 ./mvnw.cmd spring-boot:run
@@ -240,6 +253,22 @@ done as its own change without touching component logic.
 
 ---
 
+## Mobile responsiveness improvements
+
+To make the frontend usable on phones **without changing the original visual style**, the final
+responsive implementation was intentionally kept minimal and constrained to small-screen behavior:
+
+- Added `.table-scroll` wrapper in `MemberTable.jsx` around the members table.
+- Enabled horizontal scrolling for `.table-scroll` only inside the existing
+  `@media (max-width: 1024px)` block.
+- Added `min-width: 520px` for `.simpletablestyle` at the same mobile breakpoint so the table
+  preserves its desktop column layout and can be scrolled instead of collapsing.
+
+No global typography, spacing, color, or desktop layout styling was changed in this final pass.
+This preserves UI parity while resolving phone/tablet usability for the members table.
+
+---
+
 ## Build pipeline diagram
 
 ```
@@ -259,7 +288,7 @@ npm run build
   - Minifies (production mode)
      │
      ▼
- src/main/resources/static/js/app.js   (~146 KB gzipped: ~47 KB)
+ src/main/resources/static/js/app.js   195.12 kB │ gzip: 61.39 kB
      │
      ▼
  Spring Boot static resource handler
@@ -268,6 +297,26 @@ npm run build
      ▼
  Browser loads index.html → downloads app.js → React mounts → app runs
 ```
+
+Latest verified production build output:
+
+```
+src/main/resources/static/js/app.js   195.12 kB │ gzip: 61.39 kB
+```
+
+## Final review status
+
+Final review was completed after upgrading to React 19 and Vite 8:
+
+- React entrypoint already used `createRoot(...)`, so no React 19 migration code changes were
+  required.
+- Component architecture remains clean and stable: stateful orchestration in `App.jsx`, presentational
+  components under `frontend/src/components/`, HTTP boundary in `frontend/src/services/memberApi.js`.
+- Dev mode and production mode flow remain unchanged and correct.
+- `npm run build` succeeds and regenerates `src/main/resources/static/js/app.js` for Spring Boot
+  static serving.
+- Responsive behavior is improved on smaller screens by preserving table readability with
+  horizontal scroll while keeping the original visual design unchanged.
 
 ---
 
@@ -280,5 +329,7 @@ feat: migrate frontend to Vite React architecture with UI parity
 - Keep legacy UI layout and class names for CSS continuity and audit trail
 - Generate production bundle to src/main/resources/static/js/app.js
 - Preserve Spring Boot static serving; no changes to backend required
+- Upgrade React to 19.2.4 and move Vite toolchain to supported 8.x line
 - Fix Vite lib-mode process.env bug by switching to app-mode rollupOptions.input
+- Improve frontend mobile responsiveness with parity-preserving table scroll behavior
 ```

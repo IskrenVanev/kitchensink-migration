@@ -16,6 +16,16 @@ export default function Sidebar() {
             Spring Guides
           </a>
         </li>
+        <li>
+          <a href="https://react.dev/versions">
+            React Versions (v19.2.4 is used in this project)
+          </a>
+        </li>
+        <li>
+          <a href="https://vite.dev/">
+            Vite Documentation (v8.0.3 is used in this project)
+          </a>
+        </li>
       </ul>
     </div>
   );
