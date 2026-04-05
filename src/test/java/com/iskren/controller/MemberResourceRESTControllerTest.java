@@ -33,7 +33,7 @@ class MemberResourceRESTControllerTest {
     @MockitoBean
     private MemberService memberService;
 
-    private Member member(long id, String name, String email) {
+    private Member member(String id, String name, String email) {
         Member m = new Member();
         m.setId(id);
         m.setName(name);
@@ -47,8 +47,8 @@ class MemberResourceRESTControllerTest {
     @Test
     void GET_members_returns200WithJsonArray() throws Exception {
         when(memberService.listAllMembers()).thenReturn(List.of(
-                member(1L, "Alice", "alice@example.com"),
-                member(2L, "Bob", "bob@example.com")
+                member("1", "Alice", "alice@example.com"),
+                member("2", "Bob", "bob@example.com")
         ));
 
         mockMvc.perform(get("/rest/members").accept(MediaType.APPLICATION_JSON))
@@ -72,11 +72,11 @@ class MemberResourceRESTControllerTest {
     @Test
     void GET_members_responseIncludesAllMemberFields() throws Exception {
         when(memberService.listAllMembers()).thenReturn(List.of(
-                member(1L, "Alice", "alice@example.com")
+                member("1", "Alice", "alice@example.com")
         ));
 
         mockMvc.perform(get("/rest/members").accept(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].id").value("1"))
                 .andExpect(jsonPath("$[0].name").value("Alice"))
                 .andExpect(jsonPath("$[0].email").value("alice@example.com"))
                 .andExpect(jsonPath("$[0].phoneNumber").value("2125551212"));
@@ -86,20 +86,20 @@ class MemberResourceRESTControllerTest {
 
     @Test
     void GET_memberById_whenFound_returns200WithMember() throws Exception {
-        when(memberService.lookupMemberById(1L)).thenReturn(
-                Optional.of(member(1L, "Alice", "alice@example.com"))
+        when(memberService.lookupMemberById("1")).thenReturn(
+                Optional.of(member("1", "Alice", "alice@example.com"))
         );
 
         mockMvc.perform(get("/rest/members/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.id").value("1"))
                 .andExpect(jsonPath("$.name").value("Alice"))
                 .andExpect(jsonPath("$.email").value("alice@example.com"));
     }
 
     @Test
     void GET_memberById_whenNotFound_returns404() throws Exception {
-        when(memberService.lookupMemberById(99L)).thenReturn(Optional.empty());
+        when(memberService.lookupMemberById("99")).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/rest/members/99").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());

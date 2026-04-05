@@ -183,38 +183,36 @@ span.invalid {
 .table-scroll {
   width: 100%;
   border-radius: inherit;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table-shell {
   width: 100%;
-  max-width: 560px;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: #ffffff;
   box-shadow: 0 8px 20px rgba(36, 52, 70, 0.08);
-  overflow: hidden;
 }
 
 .simpletablestyle {
-  width: 100%;
-  max-width: none;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
 }
 
-.simpletablestyle td {
+.simpletablestyle th, .simpletablestyle td {
   padding: 8px 10px;
   font-size: 12px;
+  white-space: nowrap;
 }
 
 .simpletablestyle th {
   background: linear-gradient(180deg, #2a3138 0%, #1f252b 100%);
-  font-size: 12px;
   font-weight: 500;
   color: #fff;
-  padding: 9px 10px;
   text-align: left;
 }
-
 .simpletablestyle tr:nth-child(odd) {
   background: #f9fbfc;
 }

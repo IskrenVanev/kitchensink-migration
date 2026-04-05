@@ -38,7 +38,7 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<Member> lookupMemberById(long id) {
+    public Optional<Member> lookupMemberById(String id) {
         return memberRepository.findById(id);
     }
 

@@ -35,8 +35,8 @@ public class MemberResourceRESTController {
         return memberService.listAllMembers();
     }
 
-    @GetMapping(path = "/{id:[0-9][0-9]*}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Member> lookupMemberById(@PathVariable long id) {
+    @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Member> lookupMemberById(@PathVariable String id) {
         return memberService.lookupMemberById(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
