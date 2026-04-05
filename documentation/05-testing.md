@@ -7,7 +7,7 @@ The test suite covers both the **Java 21 Spring Boot backend** and the **Vite + 
 | Layer | Framework | Tests | Result |
 |-------|-----------|-------|--------|
 | Backend | JUnit 5 + Mockito + MockMvc | 51 | ✅ All pass |
-| Frontend | Vitest + @testing-library/react | 60 | ✅ All pass |
+| Frontend | Vitest 4.1.2 + @testing-library/react 16.3.2 | 60 | ✅ All pass |
 | **Total** | | **111** | ✅ |
 
 ---
@@ -141,9 +141,19 @@ All frontend test files live under `frontend/src/__tests__/`.
 ### Configuration
 
 | File | Purpose |
-|------|---------|
+|------|-------|
 | `vitest.config.js` | Extends Vite config; sets `jsdom` environment, global APIs, setup file, include pattern |
-| `frontend/src/__tests__/setup.js` | Imports `@testing-library/jest-dom` to extend Vitest matchers |
+| `frontend/src/__tests__/setup.js` | Imports `@testing-library/jest-dom` 6.9.1 to extend Vitest matchers |
+
+**Frontend devDependency versions (latest stable at time of writing)**:
+
+| Package | Version |
+|---|---|
+| `vitest` | 4.1.2 |
+| `jsdom` | 29.0.1 |
+| `@testing-library/react` | 16.3.2 |
+| `@testing-library/user-event` | 14.6.1 |
+| `@testing-library/jest-dom` | 6.9.1 |
 
 **Path note**: Vitest resolves `include` and `setupFiles` relative to the Vite `root` (`frontend/`), so paths start with `./src/...` rather than `./frontend/src/...`.
 
