@@ -63,14 +63,16 @@ The path variable pattern was changed from `/{id:[0-9][0-9]*}` (numeric-only) to
 
 ### 6. `KitchensinkModernizedApplication.java`
 
-Removed `@EntityScan` and `@EnableJpaRepositories` — these were JPA bootstrap annotations. Spring Data MongoDB is auto-configured by `@SpringBootApplication(scanBasePackages = "com.iskren")` alone.
+Removed `@EntityScan` and `@EnableJpaRepositories` — these were JPA bootstrap annotations. Added `@EnableMongoRepositories(basePackages = "com.iskren.repository")` to ensure repository scanning works with the current package layout.
 
 ### 7. `application.properties`
 
 Removed all `spring.datasource.*` and `spring.jpa.*` properties. Added:
 
 ```properties
-spring.data.mongodb.uri=mongodb://localhost:27017/kitchensink
+spring.data.mongodb.host=localhost
+spring.data.mongodb.port=27017
+spring.data.mongodb.database=kitchensink
 spring.data.mongodb.auto-index-creation=true
 ```
 
@@ -103,7 +105,7 @@ The check `count() == 0` prevents duplicate seeding across restarts (MongoDB is 
 | Seed data | `import.sql` via Hibernate DDL | `CommandLineRunner` (`DataSeeder`) |
 | Transactions | JPA `@Transactional` with JDBC rollback | MongoDB transactions require replica set |
 | Test isolation | `@Transactional` rollback on test method | `deleteAll()` in `@BeforeEach` |
-| Connection | JDBC datasource | MongoDB URI |
+| Connection | JDBC datasource | MongoDB host/port/database properties |
 | Data persistence | Wiped on restart (`create-drop`) | Persists across restarts |
 
 ---
@@ -147,10 +149,10 @@ Verified on Windows x86_64 with `de.flapdoodle.embed.mongo.spring3x:4.24.0`: emb
 | `src/main/java/com/iskren/controller/MemberResourceRESTController.java` | `/{id}` path, `String id` parameter |
 | `src/main/java/com/iskren/kitchensink_modernized/KitchensinkModernizedApplication.java` | Removed `@EntityScan` / `@EnableJpaRepositories`; added `@EnableMongoRepositories(basePackages = "com.iskren.repository")` |
 | `src/main/resources/application.properties` | MongoDB host/port/database + auto-index-creation |
-| `src/main/resources/import.sql` | Cleared (superseded by DataSeeder) |
+| `src/main/resources/import.sql` | Removed (superseded by DataSeeder) |
 | `src/main/java/com/iskren/config/DataSeeder.java` | **New** — seeds John Smith if collection empty |
 | `src/test/java/com/iskren/repository/MemberRepositoryTest.java` | Removed `@Transactional`; `deleteAll()` in `@BeforeEach`; `String` ID |
-| `src/test/java/com/iskren/service/MemberServiceTest.java` | `String` ID literals in `lookupMemberById` tests |
+| `src/test/java/com/iskren/service/MemberServiceTest.java` | `String` ID literals in lookup tests; removed event-publishing assertions |
 | `src/test/java/com/iskren/controller/MemberResourceRESTControllerTest.java` | `String` ID in helper and all assertions |
 | `src/test/resources/application.properties` | **New** — pins Flapdoodle embedded MongoDB version to 8.2.0 |
 
@@ -159,6 +161,5 @@ Verified on Windows x86_64 with `de.flapdoodle.embed.mongo.spring3x:4.24.0`: emb
 | File | Reason |
 |---|---|
 | `src/test/java/com/iskren/model/MemberValidationTest.java` | Pure Jakarta Validation unit test; no persistence |
-| `src/test/java/com/iskren/service/MemberServiceTest.java` (business logic tests) | Mockito-only; only ID-type stubs updated |
 | `frontend/` (all) | No frontend changes; REST contract is identical |
 | `vite.config.js`, `vitest.config.js`, `package.json` | No frontend changes |

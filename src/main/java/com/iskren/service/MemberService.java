@@ -1,7 +1,6 @@
 package com.iskren.service;
 
 import com.iskren.model.Member;
-import com.iskren.model.MemberRegisteredEvent;
 import com.iskren.repository.MemberRepository;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -13,7 +12,6 @@ import java.util.Optional;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,12 +22,10 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final Validator validator;
-    private final ApplicationEventPublisher eventPublisher;
 
-    public MemberService(MemberRepository memberRepository, Validator validator, ApplicationEventPublisher eventPublisher) {
+    public MemberService(MemberRepository memberRepository, Validator validator) {
         this.memberRepository = memberRepository;
         this.validator = validator;
-        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -47,7 +43,6 @@ public class MemberService {
         validateMember(member);
         log.info("Registering " + member.getName());
         memberRepository.save(member);
-        eventPublisher.publishEvent(new MemberRegisteredEvent(member));
     }
 
     private void validateMember(Member member) {

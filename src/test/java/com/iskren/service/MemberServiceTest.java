@@ -1,7 +1,6 @@
 package com.iskren.service;
 
 import com.iskren.model.Member;
-import com.iskren.model.MemberRegisteredEvent;
 import com.iskren.repository.MemberRepository;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -10,10 +9,8 @@ import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,14 +30,11 @@ class MemberServiceTest {
     @Mock
     private Validator validator;
 
-    @Mock
-    private ApplicationEventPublisher eventPublisher;
-
     private MemberService memberService;
 
     @BeforeEach
     void setUp() {
-        memberService = new MemberService(memberRepository, validator, eventPublisher);
+        memberService = new MemberService(memberRepository, validator);
     }
 
     private Member validMember() {
@@ -110,19 +104,6 @@ class MemberServiceTest {
         verify(memberRepository).save(m);
     }
 
-    @Test
-    void createMember_withValidMember_publishesMemberRegisteredEvent() {
-        Member m = validMember();
-        when(validator.validate(m)).thenReturn(Set.of());
-        when(memberRepository.findByEmail(m.getEmail())).thenReturn(Optional.empty());
-
-        memberService.createMember(m);
-
-        ArgumentCaptor<MemberRegisteredEvent> captor = ArgumentCaptor.forClass(MemberRegisteredEvent.class);
-        verify(eventPublisher).publishEvent(captor.capture());
-        assertThat(captor.getValue().getMember()).isEqualTo(m);
-    }
-
     // --- createMember: validation failure ---
 
     @Test
@@ -138,7 +119,7 @@ class MemberServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void createMember_withConstraintViolations_doesNotSaveOrPublish() {
+    void createMember_withConstraintViolations_doesNotSave() {
         Member m = validMember();
         ConstraintViolation<Member> violation = mock(ConstraintViolation.class);
         when(validator.validate(m)).thenReturn(Set.of(violation));
@@ -149,7 +130,6 @@ class MemberServiceTest {
         }
 
         verify(memberRepository, never()).save(any());
-        verify(eventPublisher, never()).publishEvent(any());
     }
 
     // --- createMember: duplicate email ---
@@ -165,7 +145,7 @@ class MemberServiceTest {
     }
 
     @Test
-    void createMember_withDuplicateEmail_doesNotSaveOrPublish() {
+    void createMember_withDuplicateEmail_doesNotSave() {
         Member m = validMember();
         when(validator.validate(m)).thenReturn(Set.of());
         when(memberRepository.findByEmail(m.getEmail())).thenReturn(Optional.of(new Member()));
@@ -176,7 +156,6 @@ class MemberServiceTest {
         }
 
         verify(memberRepository, never()).save(any());
-        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test
