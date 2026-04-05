@@ -35,7 +35,7 @@ The migration was executed in incremental layers to reduce risk and preserve par
    - JAX-RS endpoints were migrated to Spring MVC REST endpoints in `com.iskren.controller`.
 2. **Service migration**
    - Legacy EJB logic was moved into a Spring `@Service` (`MemberService`) using constructor injection.
-   - Legacy event behavior was preserved using Spring `ApplicationEventPublisher`.
+   - Business validation and duplicate-email rules were centralized in the service layer.
 3. **Persistence migration**
    - Legacy JPA/H2 persistence replaced with Spring Data MongoDB (`application.properties`).
    - Seed data migrated from `import.sql` (Hibernate DDL) to `DataSeeder.java` (`CommandLineRunner`).
@@ -77,10 +77,10 @@ kitchensink-modernized/
 │  │  │  ├─ service/                    # Business logic
 │  │  │  ├─ config/                     # DataSeeder (seed data on startup)
 │  │  │  ├─ repository/                 # Spring Data MongoDB repositories
-│  │  │  ├─ model/                      # Documents + event model
+│  │  │  ├─ model/                      # MongoDB document models
 │  │  │  └─ kitchensink_modernized/     # Spring Boot application entrypoint
 │  │  └─ resources/
-│  │     ├─ application.properties      # Runtime config (MongoDB URI)
+│  │     ├─ application.properties      # Runtime config (MongoDB host/port/database)
 │  │     └─ static/                     # Static resources served by Spring Boot
 │  └─ test/java/com/iskren/             # Backend tests
 ├─ frontend/
@@ -220,7 +220,7 @@ Frameworks and tools:
 Coverage includes:
 
 - Model validation constraints (`MemberValidationTest`)
-- Service business rules and event behavior (`MemberServiceTest`)
+- Service business rules and validation flow (`MemberServiceTest`)
 - Repository queries and persistence (`MemberRepositoryTest`)
 - REST API contract and error handling (`MemberResourceRESTControllerTest`)
 
@@ -261,9 +261,9 @@ npm run test:coverage
 
 Current verified status:
 
-- **Backend:** 51 tests passing
+- **Backend:** 50 tests passing
 - **Frontend:** 60 tests passing
-- **Total:** 111 tests passing
+- **Total:** 110 tests passing
 
 ---
 

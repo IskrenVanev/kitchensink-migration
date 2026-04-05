@@ -6,9 +6,9 @@ The test suite covers both the **Java 21 Spring Boot backend** and the **Vite + 
 
 | Layer | Framework | Tests | Result |
 |-------|-----------|-------|--------|
-| Backend | JUnit 5 + Mockito + MockMvc | 51 | ✅ All pass |
+| Backend | JUnit 5 + Mockito + MockMvc | 50 | ✅ All pass |
 | Frontend | Vitest 4.1.2 + @testing-library/react 16.3.2 | 60 | ✅ All pass |
-| **Total** | | **111** | ✅ |
+| **Total** | | **110** | ✅ |
 
 ---
 
@@ -46,7 +46,7 @@ All backend test classes live under `src/test/java/com/iskren/`.
 
 The main application class (`KitchensinkModernizedApplication`) resides in `com.iskren.kitchensink_modernized`, which is a sibling package — not an ancestor — of `com.iskren.controller`, `com.iskren.service`, etc. Spring Boot's slice test bootstrapper searches upward for `@SpringBootConfiguration`, so it cannot auto-detect the main class from sibling packages.
 
-**Resolution**: Tests that require a Spring context reference `KitchensinkModernizedApplication.class` explicitly via `@SpringBootTest(classes = ...)`. The placeholder `TestApplication.java` in `com.iskren` documents this decision.
+**Resolution**: Tests that require a Spring context reference `KitchensinkModernizedApplication.class` explicitly via `@SpringBootTest(classes = ...)`.
 
 ---
 
@@ -74,18 +74,18 @@ Validates all Bean Validation constraints defined on `Member`:
 
 **Location**: `src/test/java/com/iskren/service/MemberServiceTest.java`  
 **Type**: Unit test with Mockito (`@ExtendWith(MockitoExtension.class)`)  
-**Dependencies mocked**: `MemberRepository`, `Validator`, `ApplicationEventPublisher`
+**Dependencies mocked**: `MemberRepository`, `Validator`
 
 Covers:
 
 - **`listAllMembers()`** — delegates to repository, returns result; empty list
 - **`lookupMemberById()`** — found (non-empty Optional); not found (empty Optional)
-- **`createMember()` happy path** — saves member, publishes `MemberRegisteredEvent` with correct member reference
-- **`createMember()` with violations** — throws `ConstraintViolationException`; does NOT call `save()` or `publishEvent()`
-- **`createMember()` duplicate email** — throws `ValidationException`; does NOT call `save()` or `publishEvent()`
+- **`createMember()` happy path** — validates and saves member
+- **`createMember()` with violations** — throws `ConstraintViolationException`; does NOT call `save()`
+- **`createMember()` duplicate email** — throws `ValidationException`; does NOT call `save()`
 - **Ordering** — `validate()` is called before `findByEmail()`
 
-**Tests**: 11
+**Tests**: 10
 
 ---
 
@@ -281,4 +281,3 @@ Renders `MemberForm` with controlled props via a `renderForm()` helper.
 - **End-to-end tests** (e.g., Playwright) are not included. Adding E2E tests that start the Spring Boot server and drive a real browser would give the highest confidence in the integration.
 - **`act(...)` warnings** appear in some `App` tests for the initial `useEffect` load. These are cosmetic warnings only — tests pass. Wrapping initial render assertions in `waitFor` would silence them.
 - **Backend coverage report** is not auto-generated. Add the JaCoCo Maven plugin for HTML/XML coverage reports during CI.
-- **`MemberRegisteredEvent` consumer** — there is no listener for this event in the current codebase. If a listener is added, tests for its behaviour should be added to `MemberServiceTest`.
