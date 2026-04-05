@@ -81,18 +81,18 @@ class MemberServiceTest {
     @Test
     void lookupMemberById_whenFound_returnsMemberInOptional() {
         Member m = validMember();
-        when(memberRepository.findById(1L)).thenReturn(Optional.of(m));
+        when(memberRepository.findById("1")).thenReturn(Optional.of(m));
 
-        Optional<Member> result = memberService.lookupMemberById(1L);
+        Optional<Member> result = memberService.lookupMemberById("1");
 
         assertThat(result).contains(m);
     }
 
     @Test
     void lookupMemberById_whenNotFound_returnsEmptyOptional() {
-        when(memberRepository.findById(99L)).thenReturn(Optional.empty());
+        when(memberRepository.findById("99")).thenReturn(Optional.empty());
 
-        Optional<Member> result = memberService.lookupMemberById(99L);
+        Optional<Member> result = memberService.lookupMemberById("99");
 
         assertThat(result).isEmpty();
     }

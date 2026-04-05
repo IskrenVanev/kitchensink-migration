@@ -6,7 +6,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,7 +14,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(classes = KitchensinkModernizedApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@Transactional
 class MemberRepositoryTest {
 
     @Autowired
@@ -112,7 +110,7 @@ class MemberRepositoryTest {
 
     @Test
     void findById_whenNotFound_returnsEmptyOptional() {
-        Optional<Member> result = memberRepository.findById(9999L);
+        Optional<Member> result = memberRepository.findById("nonexistent-id");
 
         assertThat(result).isEmpty();
     }

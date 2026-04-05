@@ -92,10 +92,10 @@ Covers:
 ### 3. `MemberRepositoryTest` — Repository Integration Tests
 
 **Location**: `src/test/java/com/iskren/repository/MemberRepositoryTest.java`  
-**Type**: Integration test (`@SpringBootTest` + H2 in-memory DB + `@Transactional`)  
+**Type**: Integration test (`@SpringBootTest` + Flapdoodle embedded MongoDB 8.2.0)  
 **Context**: Full application context, `webEnvironment = NONE`
 
-Each test runs inside a transaction that rolls back, keeping tests isolated. `@BeforeEach` deletes the seed row from `import.sql` (`John Smith`).
+Each test uses `@BeforeEach` with `deleteAll()` to wipe the collection before running, keeping tests isolated (no transactional rollback — MongoDB on a single node does not support it without a replica set).
 
 Covers:
 

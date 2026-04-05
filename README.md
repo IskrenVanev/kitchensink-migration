@@ -8,10 +8,10 @@ The goal of the migration is to preserve the original business behavior (member 
 
 ### Technology Stack
 
-- **Backend:** Java 21, Spring Boot 3.5.13, Spring Web, Spring Data JPA, Jakarta Validation
-- **Database:** H2 (in-memory)
+- **Backend:** Java 21, Spring Boot 3.5.13, Spring Web, Spring Data MongoDB, Jakarta Validation
+- **Database:** MongoDB 8.2 (local)
 - **Frontend:** Vite 8 + React 19
-- **Testing:** JUnit 5, Mockito, MockMvc, Vitest, Testing Library
+- **Testing:** JUnit 5, Mockito, MockMvc, Vitest, Testing Library, Flapdoodle Embedded MongoDB
 
 ### Main Features
 
@@ -37,8 +37,9 @@ The migration was executed in incremental layers to reduce risk and preserve par
    - Legacy EJB logic was moved into a Spring `@Service` (`MemberService`) using constructor injection.
    - Legacy event behavior was preserved using Spring `ApplicationEventPublisher`.
 3. **Persistence migration**
-   - Legacy persistence configuration was replaced with Spring Boot configuration in `application.properties`.
-   - Seed data behavior was preserved with `import.sql`.
+   - Legacy JPA/H2 persistence replaced with Spring Data MongoDB (`application.properties`).
+   - Seed data migrated from `import.sql` (Hibernate DDL) to `DataSeeder.java` (`CommandLineRunner`).
+   - Stretch goal fulfilled: MongoDB is the persistence target (latest stable MongoDB 8.2).
 4. **Frontend modernization**
    - JSF/CND-style frontend workflow was replaced with modular Vite + React architecture.
    - React bundle is built into Spring Boot static resources for production serving.
@@ -55,7 +56,8 @@ The migration was executed in incremental layers to reduce risk and preserve par
   - EJB `@Stateless` service -> Spring `@Service`
 - Introduced clear package boundaries under `com.iskren`:
   - `controller`, `service`, `repository`, `model`
-- Replaced persistence bootstrap with Spring Data JPA + H2 configuration.
+- Replaced persistence bootstrap with Spring Data MongoDB configuration.
+- Fulfilled optional stretch goal: MongoDB 8.2 is the persistence layer.
 - Preserved and formalized API error contract for validation/conflict scenarios.
 - Upgraded frontend to componentized React structure with dedicated API service module.
 - Added modern, automated tests across backend and frontend.
@@ -73,12 +75,12 @@ kitchensink-modernized/
 │  │  ├─ java/com/iskren/
 │  │  │  ├─ controller/                 # REST API controllers
 │  │  │  ├─ service/                    # Business logic
-│  │  │  ├─ repository/                 # Spring Data JPA repositories
-│  │  │  ├─ model/                      # Entities + event model
+│  │  │  ├─ config/                     # DataSeeder (seed data on startup)
+│  │  │  ├─ repository/                 # Spring Data MongoDB repositories
+│  │  │  ├─ model/                      # Documents + event model
 │  │  │  └─ kitchensink_modernized/     # Spring Boot application entrypoint
 │  │  └─ resources/
-│  │     ├─ application.properties      # Runtime config
-│  │     ├─ import.sql                  # Seed data
+│  │     ├─ application.properties      # Runtime config (MongoDB URI)
 │  │     └─ static/                     # Static resources served by Spring Boot
 │  └─ test/java/com/iskren/             # Backend tests
 ├─ frontend/
@@ -109,28 +111,30 @@ kitchensink-modernized/
 From `src/main/resources/application.properties`:
 
 - `server.port=8081`
-- `spring.datasource.url=jdbc:h2:mem:kitchensink;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE`
-- `spring.datasource.username=sa`
-- `spring.datasource.password=`
-- `spring.jpa.hibernate.ddl-auto=create-drop`
+- `spring.data.mongodb.host=localhost`
+- `spring.data.mongodb.port=27017`
+- `spring.data.mongodb.database=kitchensink`
+- `spring.data.mongodb.auto-index-creation=true`
 
 ### Database Setup
 
-- Database is **H2 in-memory** for local development/testing.
-- Initial seed row is loaded from `src/main/resources/import.sql`.
-- Schema is recreated at startup (`create-drop`).
+- Database is **MongoDB** running locally on the default port `27017`.
+- The database `kitchensink` is created automatically by MongoDB on first use.
+- Initial seed data (John Smith) is inserted by `DataSeeder.java` at startup if the collection is empty.
+- Data **persists across restarts** (unlike the previous H2 `create-drop` behavior).
+- To reset the database, drop the `kitchensink` database in your MongoDB client:
+  ```bash
+  mongosh
+  use kitchensink
+  db.dropDatabase()
+  ```
 
 ### Environment Variables (Optional Overrides)
 
-No custom environment variables are required to run the app.
+You can override the MongoDB URI via an environment variable:
 
-You can override standard Spring properties when needed, for example:
-
-- `SERVER_PORT`
-- `SPRING_DATASOURCE_URL`
-- `SPRING_DATASOURCE_USERNAME`
-- `SPRING_DATASOURCE_PASSWORD`
-- `SPRING_JPA_HIBERNATE_DDL_AUTO`
+- `SPRING_DATA_MONGODB_HOST` / `SPRING_DATA_MONGODB_PORT` / `SPRING_DATA_MONGODB_DATABASE` — or use `SPRING_DATA_MONGODB_URI` to set the full connection string
+- `SERVER_PORT` — override the HTTP port (default `8081`)
 
 ### Ports
 
@@ -144,6 +148,7 @@ You can override standard Spring properties when needed, for example:
 ### Prerequisites
 
 - Java 21
+- **MongoDB 8.2** running locally on port `27017` ([Download MongoDB Community](https://www.mongodb.com/try/download/community))
 - Node.js (compatible with Vite 8; recommended modern LTS)
 - npm
 - Maven (or use included Maven wrapper)
@@ -264,32 +269,37 @@ Current verified status:
 
 ## 8) Known Limitations / Trade-offs
 
-- Current database is in-memory H2 with `create-drop` (not persistent across restarts).
+- MongoDB must be running locally before starting the application (`mongod` on port `27017`).
+- MongoDB multi-document transactions require a replica set; the current single-node setup does not support them (not required for this application).
+- Member IDs are MongoDB ObjectId hex strings rather than small integers; links bookmarked to `/rest/members/1` will not resolve on a fresh database.
 - No end-to-end browser test suite yet (unit/integration coverage is strong, but E2E is not included).
 - Frontend production bundle is generated and committed as a static artifact, which is convenient for demo parity but can increase diff size.
+- First backend test run downloads a MongoDB 8.2.0 binary via Flapdoodle (embedded, `de.flapdoodle.embed.mongo.spring3x:4.24.0`); this requires an internet connection and adds ~10–30 seconds on first use. Subsequent runs use the cached binary.
 
 ---
 
 ## 9) Future Improvements
 
-- Add better database configuration by using MongoDB and production-like environments.
+- Add a MongoDB replica set profile for transactional support and production-like environments.
 - Add CI pipeline (build + tests + coverage reports + quality gates).
 - Add E2E tests (e.g., Playwright) for full browser-to-backend verification.
 - Add observability enhancements (structured logs, metrics, health dashboards).
-- Add containerization (`Dockerfile` + Compose) for reproducible local setup.
+- Add containerization (`Dockerfile` + Docker Compose with MongoDB service) for reproducible local setup.
 
 ---
 
 ## 10) References
 
 - Legacy JBoss Kitchensink source used for migration:
-  - `C:\Users\user\Desktop\MongoDBLearning\KitchensinkModernized\kitchensink`
+  - `https://github.com/jboss-developer/jboss-eap-quickstarts/tree/8.0.x/kitchensink`
 - Red Hat JBoss EAP Quickstarts repository:
   - https://github.com/jboss-developer/jboss-eap-quickstarts
 - Spring Boot documentation:
   - https://docs.spring.io/spring-boot/docs/current/reference/html/
-- Spring Data JPA documentation:
-  - https://docs.spring.io/spring-data/jpa/reference/
+- Spring Data MongoDB documentation:
+  - https://docs.spring.io/spring-data/mongodb/reference/
+- MongoDB 8.2 release notes:
+  - https://www.mongodb.com/docs/manual/release-notes/8.2/
 - Vite documentation:
   - https://vite.dev/
 - React documentation:
@@ -300,3 +310,4 @@ Current verified status:
   - `documentation/03-persistence-migration.md`
   - `documentation/04-frontend-integration.md`
   - `documentation/05-testing.md`
+  - `documentation/06-mongodb-migration.md`
