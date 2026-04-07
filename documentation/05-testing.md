@@ -6,7 +6,7 @@ The test suite covers both the **Java 21 Spring Boot backend** and the **Vite + 
 
 | Layer | Framework | Tests | Result |
 |-------|-----------|-------|--------|
-| Backend | JUnit 5 + Mockito + MockMvc | 50 | ✅ All pass |
+| Backend | JUnit 6 + Mockito + MockMvc | 50 | ✅ All pass |
 | Frontend | Vitest 4.1.2 + @testing-library/react 16.3.2 | 60 | ✅ All pass |
 | **Total** | | **110** | ✅ |
 
