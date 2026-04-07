@@ -11,7 +11,7 @@ The goal of the migration is to preserve the original business behavior (member 
 - **Backend:** Java 21, Spring Boot 3.5.13, Spring Web, Spring Data MongoDB, Jakarta Validation
 - **Database:** MongoDB 8.2 (local)
 - **Frontend:** Vite 8 + React 19
-- **Testing:** JUnit 5, Mockito, MockMvc, Vitest, Testing Library, Flapdoodle Embedded MongoDB
+- **Testing:** JUnit 6, Mockito, MockMvc, Vitest, Testing Library, Flapdoodle Embedded MongoDB
 
 ### Main Features
 
@@ -213,7 +213,7 @@ The project uses layered tests for both backend and frontend.
 
 Frameworks and tools:
 
-- JUnit 5
+- JUnit 6
 - Mockito
 - Spring Boot Test + MockMvc
 
@@ -311,3 +311,4 @@ Current verified status:
   - `documentation/04-frontend-integration.md`
   - `documentation/05-testing.md`
   - `documentation/06-mongodb-migration.md`
+  - `documentation/07-junit6-migration.md`
