@@ -1,3 +1,0 @@
-1) Railway Cloud Deployment 
-2) Dockerfile + docker-compose
-3) Add Health Endpoint

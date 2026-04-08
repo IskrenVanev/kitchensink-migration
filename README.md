@@ -8,7 +8,7 @@ The goal of the migration is to preserve the original business behavior (member 
 
 ### Technology Stack
 
-- **Backend:** Java 21, Spring Boot 3.5.13, Spring Web, Spring Data MongoDB, Jakarta Validation
+- **Backend:** Java 21, Spring Boot 3.5.13, Spring Web, Spring Data MongoDB, Spring Boot Actuator, Jakarta Validation
 - **Database:** MongoDB 8.2 (Railway Cloud / Local)
 - **Frontend:** Vite 8 + React 19
 - **Testing:** JUnit 6, Mockito, MockMvc, Vitest, Testing Library, Flapdoodle Embedded MongoDB
@@ -86,7 +86,7 @@ kitchensink-modernized/
 │  │  │  ├─ model/                      # MongoDB document models
 │  │  │  └─ kitchensink_modernized/     # Spring Boot application entrypoint
 │  │  └─ resources/
-│  │     ├─ application.properties      # Runtime config (MongoDB host/port/database)
+│  │     ├─ application.properties      # Runtime config (env-based port + MongoDB URI)
 │  │     └─ static/                     # Static resources served by Spring Boot
 │  └─ test/java/com/iskren/             # Backend tests
 ├─ frontend/
@@ -122,6 +122,12 @@ server.port=${SERVER_PORT:${PORT:8081}}
 
 # Railway uses MONGO_URL, local falls back to localhost MongoDB
 spring.data.mongodb.uri=${MONGO_URL:mongodb://localhost:27017/kitchensink}
+
+# Expose health/info endpoints for runtime monitoring and container probes
+management.endpoints.web.exposure.include=health,info
+management.endpoint.health.probes.enabled=true
+management.health.livenessstate.enabled=true
+management.health.readinessstate.enabled=true
 ```
 
 ### Database Setup
@@ -162,6 +168,7 @@ The project is configured for seamless deployment on Railway:
 - Node.js (compatible with Vite 8; recommended modern LTS)
 - npm
 - Maven (or use included Maven wrapper)
+- Docker Desktop (Docker Engine + Docker Compose)
 
 ### A) Production Mode (single Spring Boot server)
 
@@ -185,8 +192,71 @@ This mode serves backend + static frontend from Spring Boot.
    ```
 4. Open:
    - `http://localhost:8081`
+5. Health endpoints:
+   - `http://localhost:8081/actuator/health`
+   - `http://localhost:8081/actuator/health/liveness`
+   - `http://localhost:8081/actuator/health/readiness`
 
-### B) Development Mode (hot reload for frontend)
+### B) Docker Mode (production-style container)
+
+Build and run with Docker:
+
+```bash
+docker build -t kitchensink-modernized .
+docker run --rm -p 8081:8080 \
+  -e SERVER_PORT=8080 \
+  -e MONGO_URL=mongodb://host.docker.internal:27017/kitchensink \
+  kitchensink-modernized
+```
+
+On Windows PowerShell:
+
+```powershell
+docker build -t kitchensink-modernized .
+docker run --rm -p 8081:8080 `
+  -e SERVER_PORT=8080 `
+  -e MONGO_URL=mongodb://host.docker.internal:27017/kitchensink `
+  kitchensink-modernized
+```
+
+Container health check endpoint:
+
+- `http://localhost:8081/actuator/health`
+
+### C) Docker Compose Mode (app + MongoDB)
+
+Use Docker Compose to run both the Spring Boot app and MongoDB together:
+
+```bash
+docker compose build
+docker compose up -d
+docker compose ps
+```
+
+Verify service and health endpoint:
+
+```bash
+docker compose ps
+curl http://localhost:8081/actuator/health
+```
+
+On Windows PowerShell:
+
+```powershell
+docker compose ps
+Invoke-RestMethod http://localhost:8081/actuator/health | ConvertTo-Json -Compress
+```
+
+Stop and remove containers:
+
+```bash
+docker compose down
+```
+
+Open:
+- `http://localhost:8081`
+
+### D) Development Mode (hot reload for frontend)
 
 Run backend and Vite dev server together.
 
@@ -294,7 +364,7 @@ Current verified status:
 - Add CI pipeline (build + tests + coverage reports + quality gates).
 - Add E2E tests (e.g., Playwright) for full browser-to-backend verification.
 - Add observability enhancements (structured logs, metrics, health dashboards).
-- Add containerization (`Dockerfile` + Docker Compose with MongoDB service) for reproducible local setup.
+- Add Docker Compose profile for one-command local container orchestration.
 
 ---
 
@@ -322,3 +392,4 @@ Current verified status:
   - `documentation/05-testing.md`
   - `documentation/06-mongodb-migration.md`
   - `documentation/07-junit6-migration.md`
+  - `documentation/08-docker-health-railway.md`
