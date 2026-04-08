@@ -9,9 +9,15 @@ The goal of the migration is to preserve the original business behavior (member 
 ### Technology Stack
 
 - **Backend:** Java 21, Spring Boot 3.5.13, Spring Web, Spring Data MongoDB, Jakarta Validation
-- **Database:** MongoDB 8.2 (local)
+- **Database:** MongoDB 8.2 (Railway Cloud / Local)
 - **Frontend:** Vite 8 + React 19
 - **Testing:** JUnit 6, Mockito, MockMvc, Vitest, Testing Library, Flapdoodle Embedded MongoDB
+
+### Deployment Status
+
+- **Live URL:** [https://kitchensink-migration-production.up.railway.app/](https://kitchensink-migration-production.up.railway.app/)
+- **Platform:** Railway.app
+- **Infrastructure:** Spring Boot (Java 21) + Managed MongoDB Service
 
 ### Main Features
 
@@ -108,38 +114,42 @@ kitchensink-modernized/
 
 ### Default Runtime Configuration
 
-From `src/main/resources/application.properties`:
+The application is configured to run both locally and on **Railway** automatically using environment variable fallbacks in `src/main/resources/application.properties`:
 
-- `server.port=8081`
-- `spring.data.mongodb.host=localhost`
-- `spring.data.mongodb.port=27017`
-- `spring.data.mongodb.database=kitchensink`
-- `spring.data.mongodb.auto-index-creation=true`
+```properties
+# Railway uses SERVER_PORT (or PORT), local falls back to 8081
+server.port=${SERVER_PORT:${PORT:8081}}
+
+# Railway uses MONGO_URL, local falls back to localhost MongoDB
+spring.data.mongodb.uri=${MONGO_URL:mongodb://localhost:27017/kitchensink}
+```
 
 ### Database Setup
 
-- Database is **MongoDB** running locally on the default port `27017`.
-- The database `kitchensink` is created automatically by MongoDB on first use.
+- **Local:** MongoDB running on `localhost:27017`.
+- **Cloud:** Railway Managed MongoDB (via `MONGO_URL` environment variable).
+- The database `kitchensink` (local) or `railway` (cloud) is created automatically.
 - Initial seed data (John Smith) is inserted by `DataSeeder.java` at startup if the collection is empty.
-- Data **persists across restarts** (unlike the previous H2 `create-drop` behavior).
-- To reset the database, drop the `kitchensink` database in your MongoDB client:
+- Data **persists across restarts**.
+- To reset the local database:
   ```bash
   mongosh
   use kitchensink
   db.dropDatabase()
   ```
 
-### Environment Variables (Optional Overrides)
+### Railway Deployment (Production)
 
-You can override the MongoDB URI via an environment variable:
-
-- `SPRING_DATA_MONGODB_HOST` / `SPRING_DATA_MONGODB_PORT` / `SPRING_DATA_MONGODB_DATABASE` — or use `SPRING_DATA_MONGODB_URI` to set the full connection string
-- `SERVER_PORT` — override the HTTP port (default `8081`)
+The project is configured for seamless deployment on Railway:
+1. **Service:** Spring Boot app (Java 21)
+2. **Database:** Attached MongoDB service
+3. **Domain:** [kitchensink-migration-production.up.railway.app](https://kitchensink-migration-production.up.railway.app/)
 
 ### Ports
 
-- Spring Boot backend: `8081`
-- Vite dev server: `5173`
+- Local Backend: `8081` 
+- Local Frontend (Vite): `5173` 
+- Railway (Production): Managed by `${PORT}` (usually `8080`)
 
 ---
 
