@@ -164,11 +164,11 @@ The project is configured for seamless deployment on Railway:
 ### Prerequisites
 
 - Java 21
-- **MongoDB 8.2** running locally on port `27017` ([Download MongoDB Community](https://www.mongodb.com/try/download/community))
+- **MongoDB 8.2** running locally on port `27017` ([Download MongoDB Community](https://www.mongodb.com/try/download/community)) — *required for modes A and C1 only*
 - Node.js (compatible with Vite 8; recommended modern LTS)
 - npm
 - Maven (or use included Maven wrapper)
-- Docker Desktop (Docker Engine + Docker Compose)
+- Docker Desktop (Docker Engine + Docker Compose) — *required for modes B and C*
 
 ### A) Production Mode (single Spring Boot server)
 
@@ -223,34 +223,66 @@ Container health check endpoint:
 
 - `http://localhost:8081/actuator/health`
 
-### C) Docker Compose Mode (app + MongoDB)
+### C) Docker Compose Mode
 
-Use Docker Compose to run both the Spring Boot app and MongoDB together:
+Two Docker Compose configurations are provided for different scenarios:
+
+#### C1) Local Development (app + embedded MongoDB)
+
+Use `docker-compose.local.yml` to run both the Spring Boot app and MongoDB together locally:
 
 ```bash
-docker compose build
-docker compose up -d
-docker compose ps
+docker compose -f docker-compose.local.yml build
+docker compose -f docker-compose.local.yml up -d
+docker compose -f docker-compose.local.yml ps
 ```
 
 Verify service and health endpoint:
 
 ```bash
-docker compose ps
+docker compose -f docker-compose.local.yml ps
 curl http://localhost:8081/actuator/health
 ```
 
 On Windows PowerShell:
 
 ```powershell
-docker compose ps
+docker compose -f docker-compose.local.yml ps
 Invoke-RestMethod http://localhost:8081/actuator/health | ConvertTo-Json -Compress
 ```
 
 Stop and remove containers:
 
 ```bash
-docker compose down
+docker compose -f docker-compose.local.yml down
+```
+
+Open:
+- `http://localhost:8081`
+
+#### C2) External MongoDB (Atlas or Railway)
+
+Use `docker-compose.atlas.yml` to run only the app container and connect to an external MongoDB service (e.g., MongoDB Atlas, Railway Managed MongoDB):
+
+```bash
+docker compose -f docker-compose.atlas.yml build
+MONGO_URL=mongodb+srv://user:password@cluster.mongodb.net/kitchensink docker compose -f docker-compose.atlas.yml up -d
+docker compose -f docker-compose.atlas.yml ps
+```
+
+On Windows PowerShell:
+
+```powershell
+docker compose -f docker-compose.atlas.yml build
+$env:MONGO_URL='mongodb+srv://user:password@cluster.mongodb.net/kitchensink'
+docker compose -f docker-compose.atlas.yml up -d
+docker compose -f docker-compose.atlas.yml ps
+```
+
+Stop and remove containers:
+
+```bash
+docker compose -f docker-compose.atlas.yml down
 ```
 
 Open:
@@ -349,7 +381,7 @@ Current verified status:
 
 ## 8) Known Limitations / Trade-offs
 
-- MongoDB must be running locally before starting the application (`mongod` on port `27017`).
+- MongoDB must be running locally before starting the application (`mongod` on port `27017`) — *required only for modes A and C1; mode C2 uses external MongoDB*
 - MongoDB multi-document transactions require a replica set; the current single-node setup does not support them (not required for this application).
 - Member IDs are MongoDB ObjectId hex strings rather than small integers; links bookmarked to `/rest/members/1` will not resolve on a fresh database.
 - No end-to-end browser test suite yet (unit/integration coverage is strong, but E2E is not included).
@@ -364,7 +396,7 @@ Current verified status:
 - Add CI pipeline (build + tests + coverage reports + quality gates).
 - Add E2E tests (e.g., Playwright) for full browser-to-backend verification.
 - Add observability enhancements (structured logs, metrics, health dashboards).
-- Add Docker Compose profile for one-command local container orchestration.
+- Add Docker Compose profiles to support conditional service startup (e.g., optional health checks, multi-stage builds).
 
 ---
 
