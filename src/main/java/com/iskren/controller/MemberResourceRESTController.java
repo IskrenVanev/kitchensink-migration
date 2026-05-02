@@ -1,5 +1,6 @@
 package com.iskren.controller;
 
+import com.iskren.dto.MemberStatsDTO;
 import com.iskren.model.Member;
 import com.iskren.service.MemberService;
 import jakarta.validation.ConstraintViolationException;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/rest/members")
@@ -33,6 +35,21 @@ public class MemberResourceRESTController {
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Member> listAllMembers() {
         return memberService.listAllMembers();
+    }
+
+    @GetMapping(path = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<Member> searchMembers(@RequestParam(required = false) String name,
+     @RequestParam(required = false) String email,
+     @RequestParam(defaultValue = "0") int page,
+     @RequestParam(defaultValue = "10") int size,
+     @RequestParam(defaultValue = "name") String sort,
+     @RequestParam(defaultValue = "asc") String order) {
+        return memberService.searchMembers(name, email, page, size, sort, order);
+    }
+
+    @GetMapping(path = "/stats", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<MemberStatsDTO> getMemberStats() {
+        return memberService.getMemberStats();
     }
 
     @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
