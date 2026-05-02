@@ -21,6 +21,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import org.springframework.data.mongodb.core.MongoTemplate;
+
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
 
@@ -32,9 +34,12 @@ class MemberServiceTest {
 
     private MemberService memberService;
 
+    @Mock
+    private MongoTemplate mongoTemplate;
+
     @BeforeEach
     void setUp() {
-        memberService = new MemberService(memberRepository, validator);
+        memberService = new MemberService(memberRepository, validator, mongoTemplate);
     }
 
     private Member validMember() {

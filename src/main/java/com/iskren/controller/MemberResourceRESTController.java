@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/rest/members")
@@ -33,6 +34,11 @@ public class MemberResourceRESTController {
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Member> listAllMembers() {
         return memberService.listAllMembers();
+    }
+
+    @GetMapping(path = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<Member> searchMembers(@RequestParam(required = false) String name, @RequestParam(required = false) String email) {
+        return memberService.searchMembers(name, email);
     }
 
     @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)

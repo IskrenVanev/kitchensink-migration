@@ -10,10 +10,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 
 @Service
 public class MemberService {
@@ -22,10 +27,12 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final Validator validator;
+    private final MongoTemplate mongoTemplate;
 
-    public MemberService(MemberRepository memberRepository, Validator validator) {
+    public MemberService(MemberRepository memberRepository, Validator validator, MongoTemplate mongoTemplate) {
         this.memberRepository = memberRepository;
         this.validator = validator;
+        this.mongoTemplate = mongoTemplate;
     }
 
     @Transactional(readOnly = true)
@@ -43,6 +50,24 @@ public class MemberService {
         validateMember(member);
         log.info("Registering " + member.getName());
         memberRepository.save(member);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Member> searchMembers(String name, String email) {
+        Query query = new Query();
+
+        List<Criteria> criteriaList = new ArrayList<>();
+
+        if (name != null && !name.isBlank()) {
+            criteriaList.add(Criteria.where("name").regex(name, "i"));
+        }
+        if (email != null && !email.isBlank()) {
+            criteriaList.add(Criteria.where("email").regex(email, "i"));
+        }
+        if (!criteriaList.isEmpty()) {
+            query.addCriteria(new Criteria().andOperator(criteriaList.toArray(new Criteria[0])));
+        }
+        return mongoTemplate.find(query, Member.class);
     }
 
     private void validateMember(Member member) {
