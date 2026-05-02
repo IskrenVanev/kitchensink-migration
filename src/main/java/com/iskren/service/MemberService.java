@@ -11,11 +11,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.ArrayList;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -52,21 +53,46 @@ public class MemberService {
         memberRepository.save(member);
     }
 
+    @SuppressWarnings("null")
     @Transactional(readOnly = true)
-    public List<Member> searchMembers(String name, String email) {
+    public List<Member> searchMembers(String name, String email,
+                                  int page, int size,
+                                  String sortField, String order) {
         Query query = new Query();
 
         List<Criteria> criteriaList = new ArrayList<>();
 
+        //filtering
         if (name != null && !name.isBlank()) {
             criteriaList.add(Criteria.where("name").regex(name, "i"));
         }
+
         if (email != null && !email.isBlank()) {
             criteriaList.add(Criteria.where("email").regex(email, "i"));
         }
+
         if (!criteriaList.isEmpty()) {
             query.addCriteria(new Criteria().andOperator(criteriaList.toArray(new Criteria[0])));
         }
+
+        //sorting
+        Sort sort = order.equalsIgnoreCase("desc")
+                ? Sort.by(sortField).descending()
+                : Sort.by(sortField).ascending();
+        query.with(sort);
+
+        //pagination safety
+        if (size > 50){
+            size = 50;
+        }
+
+        if (page < 0) {
+            page = 0;
+        }
+
+        //pagination
+        query.with(PageRequest.of(page, size));
+
         return mongoTemplate.find(query, Member.class);
     }
 
