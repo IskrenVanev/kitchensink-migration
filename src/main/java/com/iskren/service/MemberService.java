@@ -1,5 +1,6 @@
 package com.iskren.service;
 
+import com.iskren.dto.MemberStatsDTO;
 import com.iskren.model.Member;
 import com.iskren.repository.MemberRepository;
 import jakarta.validation.ConstraintViolation;
@@ -18,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
@@ -94,6 +97,29 @@ public class MemberService {
         query.with(PageRequest.of(page, size));
 
         return mongoTemplate.find(query, Member.class);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MemberStatsDTO> getMemberStats(){
+        Aggregation aggregation = Aggregation.newAggregation(
+            //extract domain from email
+            Aggregation.project()
+                .andExpression("substr(email, indexOfBytes(email, '@')+ 1, strLenBytes(email))")
+                .as("domain"),
+
+            //group by domain
+            Aggregation.group("domain")
+                .count().as("count"),
+
+            //rename _id to domain
+            Aggregation.project("count")
+                .and("_id").as("domain")
+        );
+        
+        AggregationResults<MemberStatsDTO> results = 
+            mongoTemplate.aggregate(aggregation, "members", MemberStatsDTO.class);
+
+        return results.getMappedResults();
     }
 
     private void validateMember(Member member) {

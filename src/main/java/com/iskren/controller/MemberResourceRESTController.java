@@ -1,5 +1,6 @@
 package com.iskren.controller;
 
+import com.iskren.dto.MemberStatsDTO;
 import com.iskren.model.Member;
 import com.iskren.service.MemberService;
 import jakarta.validation.ConstraintViolationException;
@@ -44,6 +45,11 @@ public class MemberResourceRESTController {
      @RequestParam(defaultValue = "name") String sort,
      @RequestParam(defaultValue = "asc") String order) {
         return memberService.searchMembers(name, email, page, size, sort, order);
+    }
+
+    @GetMapping(path = "/stats", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<MemberStatsDTO> getMemberStats() {
+        return memberService.getMemberStats();
     }
 
     @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
