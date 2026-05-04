@@ -38,13 +38,16 @@ public class MemberResourceRESTController {
     }
 
     @GetMapping(path = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<Member> searchMembers(@RequestParam(required = false) String name,
-     @RequestParam(required = false) String email,
-     @RequestParam(defaultValue = "0") int page,
-     @RequestParam(defaultValue = "10") int size,
-     @RequestParam(defaultValue = "name") String sort,
-     @RequestParam(defaultValue = "asc") String order) {
-        return memberService.searchMembers(name, email, page, size, sort, order);
+    public List<Member> search(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String email,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "name") String sort,
+            @RequestParam(defaultValue = "asc") String order) {
+
+        return memberService.hybridSearch(q, name, email, page, size, sort, order);
     }
 
     @GetMapping(path = "/stats", produces = MediaType.APPLICATION_JSON_VALUE)

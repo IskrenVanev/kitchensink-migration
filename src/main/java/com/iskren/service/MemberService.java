@@ -7,6 +7,8 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.ValidationException;
 import jakarta.validation.Validator;
+import jakarta.websocket.Decoder.Text;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +25,8 @@ import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.TextCriteria;
+import org.springframework.data.mongodb.core.query.TextQuery;
 
 @Service
 public class MemberService {
@@ -58,42 +62,61 @@ public class MemberService {
 
     @SuppressWarnings("null")
     @Transactional(readOnly = true)
-    public List<Member> searchMembers(String name, String email,
-                                  int page, int size,
-                                  String sortField, String order) {
-        Query query = new Query();
+    public List<Member> hybridSearch(String q, String name, String email, int page, int size,
+                                    String sortField, String order) {
+        Query query;
 
-        List<Criteria> criteriaList = new ArrayList<>();
-
-        //filtering
-        if (name != null && !name.isBlank()) {
-            criteriaList.add(Criteria.where("name").regex(name, "i"));
+        //decide strategy
+        if (q != null && q.length() >= 3){
+            //Text search
+            TextCriteria criteria = TextCriteria.forDefaultLanguage().matching(q);
+            query = TextQuery.queryText(criteria).sortByScore();
         }
+        else{
+            //regex filtering
+            query = new Query();
+            List<Criteria> criteriaList = new ArrayList<>();
 
-        if (email != null && !email.isBlank()) {
-            criteriaList.add(Criteria.where("email").regex(email, "i"));
-        }
+            if (name != null && !name.isBlank()){
+                criteriaList.add(Criteria.where("name").regex(name, "i"));
+            }
 
-        if (!criteriaList.isEmpty()) {
-            query.addCriteria(new Criteria().andOperator(criteriaList.toArray(new Criteria[0])));
+            if (email != null && !email.isBlank()){
+                criteriaList.add(Criteria.where("email").regex(email, "i"));
+            }
+
+            //fallback if only short q is provided
+            if ((name == null || name.isBlank()) && (email == null || email.isBlank()) && q != null && !q.isBlank()){
+                criteriaList.add(new Criteria().orOperator(
+                    Criteria.where("name").regex(q, "i"),
+                    Criteria.where("email").regex(q, "i")
+                ));
+            }
+
+            if (!criteriaList.isEmpty()) {
+                query.addCriteria(new Criteria().andOperator(criteriaList.toArray(new Criteria[0])));
+            }
         }
 
         //sorting
-        Sort sort = order.equalsIgnoreCase("desc")
-                ? Sort.by(sortField).descending()
-                : Sort.by(sortField).ascending();
-        query.with(sort);
+        if (!(query instanceof TextQuery)) {
+            List<String> allowedFields = List.of("name", "email");
+
+            if (!allowedFields.contains(sortField)){
+                sortField = "name";
+            }
+
+            Sort sort = order.equalsIgnoreCase("desc")
+                    ? Sort.by(sortField).descending()
+                    : Sort.by(sortField).ascending();
+            
+            query.with(sort);
+        }
 
         //pagination safety
-        if (size > 50){
-            size = 50;
-        }
+        if (size > 50) size = 50;
+        if (page < 0) page = 0;
 
-        if (page < 0) {
-            page = 0;
-        }
-
-        //pagination
         query.with(PageRequest.of(page, size));
 
         return mongoTemplate.find(query, Member.class);

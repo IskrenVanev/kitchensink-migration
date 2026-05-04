@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.index.TextIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "members")
@@ -18,11 +19,13 @@ public class Member {
 
     @NotNull
     @Size(min = 1, max = 25)
+    @TextIndexed
     @Pattern(regexp = "[^0-9]*", message = "Must not contain numbers")
     private String name;
 
     @NotBlank
     @Email
+    @TextIndexed
     @Indexed(unique = true)
     private String email;
 
