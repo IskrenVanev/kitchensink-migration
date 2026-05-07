@@ -1,5 +1,6 @@
 package com.iskren.service;
 
+import com.iskren.dto.MemberSearchResponseDTO;
 import com.iskren.dto.MemberStatsDTO;
 import com.iskren.model.Member;
 import com.iskren.repository.MemberRepository;
@@ -14,6 +15,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.ArrayList;
+
+import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -22,8 +25,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.CriteriaDefinition;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.TextCriteria;
 import org.springframework.data.mongodb.core.query.TextQuery;
@@ -120,6 +125,70 @@ public class MemberService {
         query.with(PageRequest.of(page, size));
 
         return mongoTemplate.find(query, Member.class);
+    }
+
+    @Transactional(readOnly = true)
+    public MemberSearchResponseDTO searchWithFacet(String q, int page, int size) {
+
+        if (size > 50) size = 50;
+        if (page < 0) page = 0;
+
+        List<AggregationOperation> operations = new ArrayList<>();
+
+        // match logic
+        if (q != null && !q.isBlank()) {
+            if (q.length() >= 3) {
+                operations.add(Aggregation.match(
+                        TextCriteria.forDefaultLanguage().matching(q)
+                ));
+            } else {
+                operations.add(Aggregation.match(
+                        new Criteria().orOperator(
+                                Criteria.where("name").regex(q, "i"),
+                                Criteria.where("email").regex(q, "i")
+                        )
+                ));
+            }
+        }
+
+        //facet
+        operations.add(
+                Aggregation.facet(
+                        Aggregation.skip((long) page * size),
+                        Aggregation.limit(size)
+                ).as("data")
+                .and(Aggregation.count().as("count"))
+                .as("total")
+        );
+
+        Aggregation aggregation = Aggregation.newAggregation(operations);
+
+        AggregationResults<Document> results =
+                mongoTemplate.aggregate(aggregation, "members", Document.class);
+
+        Document raw = results.getUniqueMappedResult();
+
+        if (raw == null) {
+            return new MemberSearchResponseDTO(List.of(), 0);
+        }
+
+        //data
+        List<Document> documents = raw.getList("data", Document.class);
+        if (documents == null) documents = List.of();
+
+        List<Member> data = documents.stream()
+                .map(doc -> mongoTemplate.getConverter().read(Member.class, doc))
+                .toList();
+
+        // total
+        List<Document> totalList = raw.getList("total", Document.class);
+
+        long total = 0;
+        if (totalList != null && !totalList.isEmpty()) {
+            total = ((Number) totalList.get(0).get("count")).longValue();
+        }
+
+        return new MemberSearchResponseDTO(data, total);
     }
 
     @Transactional(readOnly = true)
