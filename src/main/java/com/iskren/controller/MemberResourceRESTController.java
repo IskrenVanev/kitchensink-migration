@@ -1,5 +1,6 @@
 package com.iskren.controller;
 
+import com.iskren.dto.MemberSearchResponseDTO;
 import com.iskren.dto.MemberStatsDTO;
 import com.iskren.model.Member;
 import com.iskren.service.MemberService;
@@ -35,6 +36,15 @@ public class MemberResourceRESTController {
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Member> listAllMembers() {
         return memberService.listAllMembers();
+    }
+
+    @GetMapping(path = "/search-advanced", produces = MediaType.APPLICATION_JSON_VALUE)
+    public MemberSearchResponseDTO searchAdvanced(
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        return memberService.searchWithFacet(q, page, size);
     }
 
     @GetMapping(path = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
