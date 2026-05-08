@@ -1,5 +1,6 @@
 package com.iskren.service;
 
+import com.iskren.dto.MemberOrderSummaryDTO;
 import com.iskren.dto.MemberSearchResponseDTO;
 import com.iskren.dto.MemberStatsDTO;
 import com.iskren.model.Member;
@@ -210,6 +211,75 @@ public class MemberService {
         
         AggregationResults<MemberStatsDTO> results = 
             mongoTemplate.aggregate(aggregation, "members", MemberStatsDTO.class);
+
+        return results.getMappedResults();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Document> getMembersWithOrders(){
+        Aggregation aggregation = Aggregation.newAggregation(
+            Aggregation.lookup(
+                "orders", // from
+                "_id", // member Field
+                "memberId", // order Field
+                "orders" // output field
+            )
+        );
+
+        AggregationResults<Document> results =
+            mongoTemplate.aggregate(aggregation, 
+                "members", 
+                Document.class);
+
+        return results.getMappedResults();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Document> getMembersOrdersUnwind(){
+        Aggregation aggregation = Aggregation.newAggregation(
+            Aggregation.lookup(
+                "orders", // from
+                "_id", // member Field
+                "memberId", // order Field
+                "orders" // output field
+            ),
+            Aggregation.unwind("orders")
+        );
+
+        AggregationResults<Document> results =
+            mongoTemplate.aggregate(aggregation, 
+                "members", 
+                Document.class);
+
+        return results.getMappedResults();
+    }
+
+    @Transactional(readOnly = true)
+    public List<MemberOrderSummaryDTO> getMemberOrderSummary(){
+        Aggregation aggregation = Aggregation.newAggregation(
+            Aggregation.lookup(
+                "orders", // from
+                "_id", // member Field
+                "memberId", // order Field
+                "orders" // output field
+            ),
+
+            Aggregation.unwind("orders"),
+
+            Aggregation.group("name")
+                .sum("orders.amount").as("totalSpent")
+                .count().as("orderCount"),
+
+            Aggregation.project("totalSpent", "orderCount")
+                .and("_id").as("memberName")
+        );
+
+        AggregationResults<MemberOrderSummaryDTO> results =
+            mongoTemplate.aggregate(
+               aggregation ,
+               "members",
+               MemberOrderSummaryDTO.class
+            );
 
         return results.getMappedResults();
     }

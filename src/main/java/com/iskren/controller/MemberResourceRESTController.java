@@ -1,5 +1,6 @@
 package com.iskren.controller;
 
+import com.iskren.dto.MemberOrderSummaryDTO;
 import com.iskren.dto.MemberSearchResponseDTO;
 import com.iskren.dto.MemberStatsDTO;
 import com.iskren.model.Member;
@@ -11,6 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.MediaType;
+import org.bson.Document;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -63,6 +65,21 @@ public class MemberResourceRESTController {
     @GetMapping(path = "/stats", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<MemberStatsDTO> getMemberStats() {
         return memberService.getMemberStats();
+    }
+
+    @GetMapping(path = "/with-orders", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<Document> getMembersWithOrders() {
+        return memberService.getMembersWithOrders();
+    }
+
+    @GetMapping(path = "/orders-unwind")
+    public List<Document> getOrdersUnwind() {
+        return memberService.getMembersOrdersUnwind();
+    }
+
+    @GetMapping(path = "/orders-summary")
+    public List<MemberOrderSummaryDTO> getOrderSummary() {
+        return memberService.getMemberOrderSummary();
     }
 
     @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
