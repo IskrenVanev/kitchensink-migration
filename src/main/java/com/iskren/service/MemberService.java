@@ -267,7 +267,7 @@ public class MemberService {
             Aggregation.unwind("orders"),
 
             Aggregation.group("name")
-                .sum("orders.amount").as("totalSpent")
+                .sum("orders.totalPrice").as("totalSpent")
                 .count().as("orderCount"),
 
             Aggregation.project("totalSpent", "orderCount")
