@@ -34,6 +34,10 @@ public class Member {
     @Digits(fraction = 0, integer = 12)
     private String phoneNumber;
 
+    private long orderCount;
+
+    private double totalSpent;
+
     public String getId() {
         return id;
     }
@@ -64,5 +68,21 @@ public class Member {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public long getOrderCount() {
+        return orderCount;
+    }
+
+    public void setOrderCount(long orderCount) {
+        this.orderCount = orderCount;
+    }
+
+    public double getTotalSpent() {
+        return totalSpent;
+    }
+
+    public void setTotalSpent(double totalSpent) {
+        this.totalSpent = totalSpent;
     }
 }
